@@ -60,10 +60,10 @@ export default function Products() {
     useEffect(() => {
         const token = localStorage.getItem("token");
 
-        if (!token) {
-            window.location.href = "/login";
-            return;
-        }
+        // if (!token) {
+        //     window.location.href = "/login";
+        //     return;
+        // }
 
         // fetchUser();
         fetchProducts();
