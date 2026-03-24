@@ -24,10 +24,10 @@ class ProductRequest extends FormRequest
     {
         return [
             'name'=> 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'price'       => 'required|numeric|min:0',
-            'stock'    => 'in:0,1',
-            'image'       => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'description'=> 'nullable|string|max:1000',
+            'price'=> 'required|numeric|min:0',
+            'stock'=> 'in:0,1',
+            'image'=> 'required|image|mimes:jpg,jpeg,png|max:2048',
         ];
     }
 
@@ -43,7 +43,7 @@ class ProductRequest extends FormRequest
             'price.numeric' => 'Price must be a number',
             'price.min' => 'Price cannot be negative',
 
-            'in_stock.boolean' => 'Stock status must be true or false',
+            'stock.boolean' => 'Stock status must be true or false',
 
             'image.image' => 'File must be an image',
             'image.mimes' => 'Only JPG, JPEG, PNG allowed',

@@ -23,8 +23,8 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => 'required|email|unique:users, email',
-            'password'=> 'required| min:6 | max:10 | regex:/^(?=.*[A-Z])(?=.*[0-9])(?=.*[@$!%*?&]).+$/',
+            'email' => 'required|email|exists:users,email',
+            'password'=> 'required|min:6|max:10|regex:/^(?=.*[A-Z])(?=.*[0-9])(?=.*[@$!%*?&]).+$/',
         ];
     }
 
@@ -33,7 +33,7 @@ class LoginRequest extends FormRequest
         return [
             'email.required' => 'Email is required',
             'email.email' => 'Email is invalid',
-            'email.unique' => 'Email is already exists',
+            'email.exists' => 'Email is already exists',
             'password.required' => 'Password is required',
             'password.min' => 'Password has minimum 6 Character',
             'password.max' => 'Password has maximum 10 Character',
