@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Hash;
 class AuthService{
 
    public function register(array $data){
-    // dump($data);
+    $user = Auth::user();try {
+      // dump($data);
         $user = User::create([
             'name'     => $data['name'],
             'email'    => $data['email'],
@@ -18,10 +19,14 @@ class AuthService{
 
         // dd($user);
         return $user;
+    } catch (error) {
+         return false;
+    }
    }
 
    public function login(array $data){
-     $user = User::where('email' , $data['email'])->first();
+     try {
+      $user = User::where('email' , $data['email'])->first();
 
      if(!$user || !Hash::check($data['password'], $user->password)){
         return null;
@@ -31,14 +36,22 @@ class AuthService{
 
      return [
         'user' => $user,
-        'token'=> $token
+        'token'=> $token,
+        'role' => $user->role ?? 'user',
      ];
+     } catch (error) {
+       return false;
+     }
    }
 
 
    public function logout($user){
-        $user->token()->revoke();
+        try {
+         $user->token()->revoke();
         return true;
+        } catch (error) {
+         return false;
+        }
    }
     
 }

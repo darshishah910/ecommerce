@@ -15,13 +15,13 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    
+
 
     const handleChange = (e: any) => {
         const { name, value } = e.target;
 
         setForm({ ...form, [name]: value });
-       
+
         setErrors((prev: any) => ({
             ...prev,
             [name]: null
@@ -29,56 +29,57 @@ export default function Login() {
     };
 
     const handleSubmit = async (e: any) => {
-    e.preventDefault();
+        e.preventDefault();
 
-    console.log("Submit clicked");
+        console.log("Submit clicked");
 
-    if (loading) return;
+        if (loading) return;
 
-    const validationErrors = validateLogin(form);
-    console.log("Validation:", validationErrors);
+        const validationErrors = validateLogin(form);
+        console.log("Validation:", validationErrors);
 
 
-    if (validationErrors && Object.keys(validationErrors).length > 0) {
-        setErrors(validationErrors);
-        return;
-    }
-
-    setLoading(true);
-
-    try {
-        console.log("Calling API...");
-
-        const res = await api.post('/login', form,{
-                withCredentials: true,
-        });
-
-        console.log("API Response:", res.data);
-
-       
-        localStorage.setItem('token', res.data.data.token);
-
-        toast.success('Login successful ');
-
-        setTimeout(() => {
-            window.location.href = '/products';
-        }, 800);
-
-    } catch (error: any) {
-        console.log("API Error:", error?.response);
-
-        if (error.response?.status === 422) {
-            setErrors(error.response.data.errors);
-        } else if (error.response?.status === 401) {
-            toast.error('Invalid credentials');
-        } else {
-            toast.error('Login failed');
+        if (validationErrors && Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return;
         }
 
-    } finally {
-        setLoading(false);
-    }
-};
+        setLoading(true);
+
+        try {
+            console.log("Calling API...");
+
+            const res = await api.post('/login', form, {
+                withCredentials: true,
+            });
+
+            console.log("API Response:", res.data);
+
+
+            localStorage.setItem('token', res.data.data.token);
+            localStorage.setItem("user", JSON.stringify(res.data.data.user));
+
+            toast.success('Login successful ');
+
+            setTimeout(() => {
+                window.location.href = '/products';
+            }, 800);
+
+        } catch (error: any) {
+            console.log("API Error:", error?.response);
+
+            if (error.response?.status === 422) {
+                setErrors(error.response.data.errors);
+            } else if (error.response?.status === 401) {
+                toast.error('Invalid credentials');
+            } else {
+                toast.error('Login failed');
+            }
+
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="auth-container">
@@ -103,7 +104,7 @@ export default function Login() {
                     </p>
                 )}
 
-              
+
                 <div style={{ position: 'relative' }}>
                     <input
                         type={showPassword ? 'text' : 'password'}
@@ -128,12 +129,12 @@ export default function Login() {
                     </p>
                 )}
 
-               
+
                 <button type='submit' disabled={loading}>
                     {loading ? 'Logging in...' : 'Login'}
                 </button>
 
-               
+
                 <p className="switch-link">
                     Don’t have an account?{' '}
                     <a href="/register">Register</a>

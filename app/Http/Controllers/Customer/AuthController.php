@@ -26,11 +26,15 @@ class AuthController extends Controller
     
     public function register(RegisterRequest $request)
     {
-        $this->authService->register($request->validated());
+        try {
+            $this->authService->register($request->validated());
 
         return redirect()
             ->route('login')
             ->with('success', 'Register Successfully');
+        } catch (error) {
+            return redirect('register');
+        }
     }
 
     
@@ -41,7 +45,8 @@ class AuthController extends Controller
 
    public function login(LoginRequest $request)
     {
-        $success = $this->authService->loginWeb($request->validated());
+        try {
+            $success = $this->authService->loginWeb($request->validated());
 
         if (!$success) {
             return back()->withErrors([
@@ -50,12 +55,23 @@ class AuthController extends Controller
         }
 
         return redirect()->route('product');
+        } catch ( error) {
+            return back()->withErrors([
+                'email'=> 'try again'
+            ]);
+        }
     }
 
     public function logout()
     {
-        $this->authService->logoutWeb();
+        try {
+            $this->authService->logoutWeb();
 
         return redirect()->route('login');
+        } catch (error) {
+            return back()->withErrors([
+                'message'=>'invalid '
+            ]);
+        }
     }
 }

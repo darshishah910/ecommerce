@@ -20,7 +20,8 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request)
     {
-        $data = $this->authService->login($request->validated());
+       try {
+         $data = $this->authService->login($request->validated());
         // dd($data);
 
         if(!$data){
@@ -35,25 +36,46 @@ class AuthController extends Controller
             "message"=> "Login Successfull",
             'data' => $data,
         ],200);
+       } catch (error) {
+        return response()->json([
+            'success'=> false,
+            'message'=> $error,
+        ]);
+
+       }
     }
 
     public function register(RegisterRequest $request)
     {
-        $data = $this->authService->register($request->validated());
+        try {
+            $data = $this->authService->register($request->validated());
 
         return response()->json([
             'success'=> true,
             'message'=> 'Register Successfull',
             'data'=> $data,
         ],201);
+        } catch (error) {
+            return response()->json([
+                'success'=> false,
+                'message'=> $error,
+            ]);
+        }
     }
 
     public function logout(Request $request){
-        $this->authService->logout($request->user());
+        try {
+            $this->authService->logout($request->user());
         return response()->json([
             'success'=> true,
             'message'=> 'Logout Successfull',
         ]);
+        } catch (error) {
+            return response()->json([
+                'success'=> false,
+                'message'=> $error,
+            ]);
+        }
 
     }
     

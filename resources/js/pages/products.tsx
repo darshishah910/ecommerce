@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "../lib/axios";
 import "../styles/style.css";
-// import Sidebar from "../components/Sidebar";
-// import Navbar from "../components/Navbar";
 import { toast, Toaster } from "react-hot-toast";
 import { validateProduct } from "../validations/productValidation";
+
+import Navbar from "../components/ecommerce/Navbar";
+import Footer from "../components/ecommerce/Footer";
 
 type ProductForm = {
     name: string;
@@ -16,7 +17,9 @@ type ProductForm = {
 
 export default function Products() {
     const [products, setProducts] = useState<any[]>([]);
-    // const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<any>(null);
+
+    const isAdmin = user?.role === "admin";
 
     const [form, setForm] = useState<ProductForm>({
         name: "",
@@ -26,23 +29,15 @@ export default function Products() {
         stock: 1
     });
 
-    // const isAdmin = user?.role === "admin";
-
     const [editId, setEditId] = useState<number | null>(null);
     const [errors, setErrors] = useState<any>({});
     const [loading, setLoading] = useState(false);
-
-
-    const [previewImage, setPreviewImage] = useState<string | null>(null);
 
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const [pagination, setPagination] = useState<any>({});
 
-    // const fetchUser = async () => {
-    //     const res = await axios.get("/user");
-    //     setUser(res.data.user);
-    // };
+    const [cartCount, setCartCount] = useState(0);
 
     const fetchProducts = async () => {
         const params: any = { page };
@@ -58,14 +53,21 @@ export default function Products() {
     };
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
+        
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
 
-        // if (!token) {
-        //     window.location.href = "/login";
-        //     return;
-        // }
+        let guestId = localStorage.getItem("guest_id");
+        if (!guestId) {
+            guestId = "guest_" + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem("guest_id", guestId);
+        }
 
-        // fetchUser();
+        const storedCart = JSON.parse(localStorage.getItem("cart") || "[]");
+        setCartCount(storedCart.length);
+
         fetchProducts();
     }, [search, page]);
 
@@ -73,12 +75,7 @@ export default function Products() {
         const { name, value, files } = e.target;
 
         if (name === "image") {
-            const file = files[0];
-            setForm({ ...form, image: file });
-
-            if (file) {
-                setPreviewImage(URL.createObjectURL(file));
-            }
+            setForm({ ...form, image: files[0] });
         } else if (name === "stock") {
             setForm({ ...form, stock: parseInt(value) });
         } else {
@@ -88,36 +85,29 @@ export default function Products() {
 
     const handleSubmit = async () => {
         if (loading) return;
-        // console.log("erwrff")
 
         const validationErrors = validateProduct(form, !!editId);
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
-            console.log(validationErrors)
             return;
         }
 
         try {
             setLoading(true);
-            const data = new FormData();
-            (Object.keys(form) as (keyof typeof form)[]).forEach((key) => {
-                const value = form[key];
-                if (value === null) return;
 
-                if (value instanceof File) {
-                    data.append(key, value);
-                } else {
-                    data.append(key, String(value));
-                }
+            const data = new FormData();
+            Object.keys(form).forEach((key: any) => {
+                const value = (form as any)[key];
+                if (value !== null) data.append(key, value);
             });
 
             if (editId) {
                 data.append("_method", "PUT");
                 await axios.post(`/products/${editId}`, data);
-                toast.success("Product updated");
+                toast.success("Updated");
             } else {
                 await axios.post("/products", data);
-                toast.success("Product created");
+                toast.success("Created");
             }
 
             setForm({
@@ -129,12 +119,10 @@ export default function Products() {
             });
 
             setEditId(null);
-            setErrors({});
             fetchProducts();
 
-        } catch (error: any) {
-            toast.error("Error occurred");
-            console.log(error.response?.data);
+        } catch {
+            toast.error("Error");
         } finally {
             setLoading(false);
         }
@@ -145,11 +133,10 @@ export default function Products() {
             name: p.name,
             description: p.description,
             price: String(p.price),
-            image: null,
+            image: p.image,
             stock: p.stock
         });
 
-        setPreviewImage(p.image);
         setEditId(p.id);
     };
 
@@ -161,20 +148,47 @@ export default function Products() {
         fetchProducts();
     };
 
-    const handleLogout = async () => {
-        await axios.post("/logout");
-        localStorage.removeItem("token");
-        window.location.href = "/login";
-    };
+    const handleAddToCart = async (product: any) => {
+    try {
+        let guestId = localStorage.getItem("guest_id");
+
+        if (!guestId) {
+            guestId = "guest_" + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem("guest_id", guestId);
+        }
+
+        const token = localStorage.getItem("token");
+
+        await axios.post(
+            "/cart/add",
+            {
+                product_id: product.id,
+                quantity: 1,
+                guest_id: guestId
+            },
+            {
+                headers: token
+                    ? { Authorization: `Bearer ${token}` }
+                    : {}
+            }
+        );
+
+        
+        window.dispatchEvent(new Event("cartUpdated"));
+
+    } catch (err) {
+        console.error(err);
+    }
+};
 
     return (
-        <div className="layout">
+        <>
             <Toaster />
 
-            <div className="main-content">
+            <Navbar user={user} cartCount={cartCount} />
 
+            <div className="main-content">
                 <div className="product-container">
-                    <h2>Products</h2>
 
                     <input
                         type="text"
@@ -187,24 +201,23 @@ export default function Products() {
                         className="search-input"
                     />
 
-                    <div className="product-form">
-                        <input name="name" value={form.name} onChange={handleChange} placeholder="Name" />
-                        {errors.name && <p className="error">{errors.name}</p>}
+                    {isAdmin && (
+                        <div className="product-form">
+                            <input name="name" value={form.name} onChange={handleChange} placeholder="Name" />
+                            <input type="number" name="price" value={form.price} onChange={handleChange} placeholder="Price" />
+                            <input type="file" name="image" onChange={handleChange} />
+                             <input name="description" value={form.description} onChange={handleChange} placeholder="Description" />
 
-                        <input type="number" name="price" value={form.price} onChange={handleChange} placeholder="Price" />
-                        {errors.price && <p className="error">{errors.price}</p>}
+                            <select name="stock" value={form.stock} onChange={handleChange}>
+                                <option value={1}>In Stock</option>
+                                <option value={0}>Out of Stock</option>
+                            </select>
 
-                        <input type="file" name="image" onChange={handleChange} />
-
-                        <select name="stock" value={form.stock} onChange={handleChange}>
-                            <option value={1}>In Stock</option>
-                            <option value={0}>Out of Stock</option>
-                        </select>
-
-                        <button type="submit" onClick={handleSubmit}>
-                            {editId ? "Update" : "Create"}
-                        </button>
-                    </div>
+                            <button onClick={handleSubmit}>
+                                {editId ? "Update" : "Create"}
+                            </button>
+                        </div>
+                    )}
 
                     <div className="product-grid">
                         {products.map((p) => (
@@ -218,57 +231,47 @@ export default function Products() {
                                     }}
                                 />
 
-                                <h3 className="card-title">{p.name}</h3>
-
+                                <h3>{p.name}</h3>
+                                <p className="">{p.description}</p>
                                 <p className="price">₹{p.price}</p>
-
-                                <span className={`stock ${p.stock ? "in" : "out"}`}>
-                                    {p.stock ? "In Stock" : "Out of Stock"}
-                                </span>
+                                <p className="stock">{p.stock}</p>
 
                                 <div className="card-actions">
+                                    {!isAdmin &&  (
                                     <button
                                         className="btn-cart"
-                                        onClick={() => toast.success("Added to cart")}
+                                        onClick={() => handleAddToCart(p)}
                                     >
                                         Add to Cart
                                     </button>
+                                    )}
 
-                                    <button
-                                        className="btn-edit"
-                                        onClick={() => handleEdit(p)}
-                                    >
-                                        Edit
-                                    </button>
-
-                                    <button
-                                        className="btn-delete"
-                                        onClick={() => handleDelete(p.id)}
-                                    >
-                                        Delete
-                                    </button>
+                                    {isAdmin && (
+                                        <>
+                                            <button className="btn-edit" onClick={() => handleEdit(p)}>Edit</button>
+                                            <button className="btn-delete" onClick={() => handleDelete(p.id)}>Delete</button>
+                                        </>
+                                    )}
                                 </div>
 
                             </div>
                         ))}
                     </div>
+
                     <div className="pagination">
                         <button
-                            disabled={!pagination?.current_page || pagination.current_page === 1}
+                            disabled={pagination.current_page === 1}
                             onClick={() => setPage(page - 1)}
                         >
                             Prev
                         </button>
 
                         <span>
-                            Page {pagination?.current_page || 1} of {pagination?.last_page || 1}
+                            Page {pagination.current_page} of {pagination.last_page}
                         </span>
 
                         <button
-                            disabled={
-                                !pagination?.last_page ||
-                                pagination.current_page === pagination.last_page
-                            }
+                            disabled={pagination.current_page === pagination.last_page}
                             onClick={() => setPage(page + 1)}
                         >
                             Next
@@ -277,6 +280,8 @@ export default function Products() {
 
                 </div>
             </div>
-        </div>
+
+            <Footer />
+        </>
     );
 }
