@@ -27,7 +27,17 @@ Route::get('/cart',[CartController::class,'index']);
 
 Route::get('/orders',[OrderController::class,'index']);
 
-Route::get('/address',[AddressController::class,'index']);
+// Route::get('/address',[AddressController::class,'index']);
 
 Route::get('/checkout',[CheckOutController::class,'index']);
+
+
+
+Route::middleware('auth')->group(function () {
+    Route::get('/addresses', [AddressController::class, 'index'])->name('address');
+
+    Route::post('/addresses', [AddressController::class, 'store']);
+    Route::post('/addresses/update/{id}', [AddressController::class, 'update']);
+    Route::post('/addresses/delete/{id}', [AddressController::class, 'destroy']);
+});
 

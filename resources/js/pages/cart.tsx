@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "../lib/axios";
 import Navbar from "../components/ecommerce/Navbar";
 import Footer from "../components/ecommerce/Footer";
-import "../styles/style.css"
+import "../styles/style.css";
 
 interface Product {
     id: number;
@@ -33,10 +33,10 @@ export default function Cart() {
             setLoading(true);
 
             const res = await axios.get("/cart", {
-                params: { guest_id: guestId }
-                // headers: token
-                //     ? { Authorization: `Bearer ${token}` }
-                //     : {}
+                params: { guest_id: guestId },
+                headers: token
+                    ? { Authorization: `Bearer ${token}` }
+                    : {}
             });
 
             setCart(res.data);
@@ -55,40 +55,28 @@ export default function Cart() {
     const updateQty = async (id: number, qty: number) => {
         if (qty < 1) return;
 
-        try {
-            await axios.put(`/cart/${id}`, {
-                quantity: qty,
-                guest_id: guestId
-            });
+        await axios.put(`/cart/${id}`, {
+            quantity: qty,
+            guest_id: guestId
+        });
 
-            fetchCart();
-        } catch (err) {
-            console.error("Update error:", err);
-        }
+        fetchCart();
     };
 
     const removeItem = async (id: number) => {
-        try {
-            await axios.delete(`/cart/${id}`, {
-                data: { guest_id: guestId }
-            });
+        await axios.delete(`/cart/${id}`, {
+            data: { guest_id: guestId }
+        });
 
-            fetchCart();
-        } catch (err) {
-            console.error("Delete error:", err);
-        }
+        fetchCart();
     };
 
-    const removemultiItem = async () => {
-        try {
-            await axios.delete(`/cart/delete`, {
-                data: { guest_id: guestId }
-            });
+    const removeAll = async () => {
+        await axios.delete(`/cart/delete`, {
+            data: { guest_id: guestId }
+        });
 
-            fetchCart();
-        } catch (err) {
-            console.error("Delete error:", err);
-        }
+        fetchCart();
     };
 
     const total =
@@ -97,32 +85,18 @@ export default function Cart() {
             0
         ) || 0;
 
-    const handleOrder = async () => {
-        if (!token) {
+    const handleOrder = () => {
+        if (!token || token === "null" || token === "undefined") {
             alert("Please login first");
+            console.log("token")
             window.location.href = "/login";
             return;
         }
 
-        try {
-            // await axios.post("/checkout",
-            //     {
-            //         headers: {
-            //             Authorization: `Bearer ${token}`
-            //         }
-            //     }
-            // );
-
-            window.location.href = "/checkout";
-
-            // alert("Order placed successfully!");
-            // fetchCart();
-
-        } catch (err) {
-            console.error("Order error:", err);
-        }
+        window.location.href = "/checkout";
     };
 
+  
     if (loading) {
         return <p className="text-center mt-10">Loading cart...</p>;
     }
@@ -132,9 +106,9 @@ export default function Cart() {
     }
 
     return (
-
         <div className="cart-container">
             <Navbar />
+
             <h2>Your Cart</h2>
 
             {cart.items.map((item) => (
@@ -146,29 +120,12 @@ export default function Cart() {
                         <p>₹{item.product.price}</p>
 
                         <div className="qty-controls">
-                            <button
-                                onClick={() =>
-                                    updateQty(item.id, item.quantity - 1)
-                                }
-                            >
-                                -
-                            </button>
-
+                            <button onClick={() => updateQty(item.id, item.quantity - 1)}>−</button>
                             <span>{item.quantity}</span>
-
-                            <button
-                                onClick={() =>
-                                    updateQty(item.id, item.quantity + 1)
-                                }
-                            >
-                                +
-                            </button>
+                            <button onClick={() => updateQty(item.id, item.quantity + 1)}>+</button>
                         </div>
 
-                        <button
-                            className="remove-btn"
-                            onClick={() => removeItem(item.id)}
-                        >
+                        <button onClick={() => removeItem(item.id)}>
                             Remove
                         </button>
                     </div>
@@ -177,14 +134,11 @@ export default function Cart() {
 
             <h3>Total: ₹{total}</h3>
 
-            <button
-                className="remove-btn"
-                onClick={() => removemultiItem()}
-            >
-                Remove
+            <button onClick={removeAll}>
+                Clear Cart
             </button>
 
-            <button className="order-btn" onClick={handleOrder}>
+            <button onClick={handleOrder}>
                 Place Order
             </button>
 

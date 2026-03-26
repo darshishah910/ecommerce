@@ -3,47 +3,56 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Http\Requests\AddressRequest;
-use App\Models\Address;
 use App\Services\AddressService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class AddressController extends Controller
 {
-    public function index(){
-        $address = Address::all();
-        return Inertia::render("address", [
-            "address"=> $address,
+    protected $addressService;
+
+    public function __construct(AddressService $addressService)
+    {
+        $this->middleware('auth'); 
+        $this->addressService = $addressService;
+    }
+
+
+    public function index(Request $request)
+    {
+        $addresses = $this->addressService->get($request->user());
+
+        return Inertia::render('Address', [
+            'addresses' => $addresses
         ]);
     }
 
-    public function store(AddressRequest $request){
-        $address = Address::create($request->all());
-        return redirect()->route("address")->with("success","Address added Successfully");
+    public function store(AddressRequest $request)
+    {
+        $this->addressService->create(
+            $request->user(),
+            $request->validated()
+        );
+
+        return redirect()->back()->with('success', 'Address added');
     }
 
-    public function show(Address $address){
-        return Inertia::render("address", [
-            "address"=> $address
-        ]);
-    }
+    public function update(AddressRequest $request, $id)
+    {
+        $this->addressService->update(
+            $id,
+            $request->validated()
+        );
 
-    public function edit(Address $address){
-        return Insetia::render("address", [
-            "address"=> $address
-        ]);
-    }
-
-    public function update(AddressRequest $request, Address $address){
-        $address->update($request->all());
-        return redirect()->route("address")->with("success","Address Updated");
-    }
-
-    public function destroy(Address $address){
-        $address->delete();
-        return redirect()->route("address")->with("success","address deleted");
+        return redirect()->back()->with('success', 'Address updated');
     }
 
     
+    public function destroy($id)
+    {
+        $this->addressService->delete($id);
+
+        return redirect()->back()->with('success', 'Address deleted');
+    }
 }
