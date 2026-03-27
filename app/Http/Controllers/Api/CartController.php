@@ -26,16 +26,20 @@ class CartController extends Controller
     }
 
     public function add(Request $request)
-    {
-        return response()->json(
-            $this->cartService->add(
-                $request->user(),
-                $request->guest_id,
-                $request->product_id,
-                $request->quantity ?? 1
-            )
-        );
-    }
+{
+    return response()->json(
+        $this->cartService->add(
+            $request->user(),
+            $request->input('guest_id'),   
+            $request->input('product_id'), 
+            $request->input('quantity', 1)
+        )
+    );
+    dd([
+    'guest_id' => $request->input('guest_id'),
+    'product_id' => $request->input('product_id'),
+]);
+}
 
     public function update(Request $request, $id)
     {
@@ -50,11 +54,16 @@ class CartController extends Controller
         return response()->json(['message' => 'Removed']);
     }
 
-    public function removeAll()
-    {
-        $this->cartService->removeAll();
-        return response()->json(['message' => 'Removed']);
-    }
+    public function removeAll(Request $request)
+{
+   
+    $this->cartService->removeAll(
+        $request->user(),
+        $request->guest_id
+    );
+
+    return response()->json(['message' => 'Cart cleared']);
+}
 
     public function merge(Request $request)
     {

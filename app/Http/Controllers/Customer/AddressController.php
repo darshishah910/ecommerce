@@ -14,7 +14,7 @@ class AddressController extends Controller
 
     public function __construct(AddressService $addressService)
     {
-        $this->middleware('auth'); 
+        // $this->middleware('auth'); 
         $this->addressService = $addressService;
     }
 
@@ -23,7 +23,7 @@ class AddressController extends Controller
     {
         $addresses = $this->addressService->get($request->user());
 
-        return Inertia::render('Address', [
+        return Inertia::render('address', [
             'addresses' => $addresses
         ]);
     }

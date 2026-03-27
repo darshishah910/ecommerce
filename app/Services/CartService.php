@@ -7,18 +7,19 @@ use App\Models\CartItem;
 
 class CartService
 {
-    public function getCart($user, $guestId)
-    {
-        if ($user) {
-            return Cart::firstOrCreate(['user_id' => $user->id]);
-        }
-
-        return Cart::firstOrCreate(['guest_id' => $guestId]);
+    public function getCart($user)
+{
+    if ($user) {
+        return Cart::firstOrCreate(['user_id' => $user->id])->load('items.product');
     }
 
-    public function add($user, $guestId, $productId, $qty = 1)
-    {
-        $cart = $this->getCart($user, $guestId);
+    return session()->get('cart', []);
+}
+
+   public function add($user, $guestId, $productId, $qty = 1)
+{
+    if ($user) {
+        $cart = Cart::firstOrCreate(['user_id' => $user->id]);
 
         $item = CartItem::where('cart_id', $cart->id)
             ->where('product_id', $productId)
@@ -37,6 +38,23 @@ class CartService
         return $cart->load('items.product');
     }
 
+    
+    $cart = session()->get('cart', []);
+
+    if (isset($cart[$productId])) {
+        $cart[$productId]['quantity'] += $qty;
+    } else {
+        $cart[$productId] = [
+            'product_id' => $productId,
+            'quantity' => $qty
+        ];
+    }
+
+    session()->put('cart', $cart);
+
+    return $cart;
+}
+
     public function update($itemId, $qty)
     {
         $item = CartItem::findOrFail($itemId);
@@ -45,15 +63,29 @@ class CartService
         return $item;
     }
 
-    public function remove($itemId)
-    {
-        return CartItem::findOrFail($itemId)->delete();
+    public function remove($user, $productId)
+{
+    if ($user) {
+        return CartItem::where('product_id', $productId)->delete();
     }
 
-    public function removeAll()
-    {
-        return CartItem::findOrFail()->delete();
+    $cart = session()->get('cart', []);
+    unset($cart[$productId]);
+    session()->put('cart', $cart);
+}
+
+    public function removeAll($user)
+{
+    if ($user) {
+        $cart = Cart::where('user_id', $user->id)->first();
+        if ($cart) {
+            CartItem::where('cart_id', $cart->id)->delete();
+        }
+        return;
     }
+
+    session()->forget('cart'); 
+}
 
     public function get($user, $guestId)
     {
@@ -61,31 +93,31 @@ class CartService
         return $cart->load('items.product');
     }
 
-    public function merge($user, $guestId)
-    {
-        $guestCart = Cart::where('guest_id', $guestId)->first();
-        $userCart = Cart::firstOrCreate(['user_id' => $user->id]);
+    public function merge($user)
+{
+    $sessionCart = session()->get('cart', []);
 
-        if (!$guestCart) return $userCart;
+    if (!$sessionCart) return;
 
-        foreach ($guestCart->items as $item) {
-            $existing = CartItem::where('cart_id', $userCart->id)
-                ->where('product_id', $item->product_id)
-                ->first();
+    $userCart = Cart::firstOrCreate(['user_id' => $user->id]);
 
-            if ($existing) {
-                $existing->increment('quantity', $item->quantity);
-            } else {
-                CartItem::create([
-                    'cart_id' => $userCart->id,
-                    'product_id' => $item->product_id,
-                    'quantity' => $item->quantity
-                ]);
-            }
+    foreach ($sessionCart as $productId => $item) {
+
+        $existing = CartItem::where('cart_id', $userCart->id)
+            ->where('product_id', $productId)
+            ->first();
+
+        if ($existing) {
+            $existing->increment('quantity', $item['quantity']);
+        } else {
+            CartItem::create([
+                'cart_id' => $userCart->id,
+                'product_id' => $productId,
+                'quantity' => $item['quantity']
+            ]);
         }
-
-        $guestCart->delete();
-
-        return $userCart->load('items.product');
     }
+
+    session()->forget('cart'); 
+}
 }

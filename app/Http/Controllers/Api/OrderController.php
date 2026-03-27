@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Address;
 use App\Services\OrderService;
 
 class OrderController extends Controller
@@ -17,37 +18,60 @@ class OrderController extends Controller
         $this->orderService = $orderService;
     }
 
-    public function index(){
-        $orders = $this->orderService->getOrders();
-        return response()->json($orders);
-    }
+    public function store(Request $request)
+{
+    $user = $request->user();
+    $address = Address::findOrFail($request->address_id);
 
-    public function store(Request $request){
-         $user = $request->user();
-        $order = $this->orderService->createOrder($user, $request->all());
-        $order->save();
-        
+    $order = $this->orderService->create($user, $address);
+
+    return response()->json([
+        "status" => "success",
+        "message" => "Order placed successfully",
+        "order" => $order
+    ]);
+}
+
+public function index(Request $request)
+{
+    $orders = $this->orderService->get($request->user());
+
+    return response()->json($orders);
+}
+
+public function updateStatus(Request $request, Order $order)
+{
+    if ($request->user()->role !== 'admin') {
         return response()->json([
-            "status"=> "success",
-            "message"=> "Order sucessfull"
-        ]);
+            "message" => "Unauthorized"
+        ], 403);
     }
 
-    public function update(Request $request, Order $order){
-        $this->orderService->updateOrder($order, $request->all());
+    $request->validate([
+        'status' => 'required|in:pending,processing,shipped,delivered,cancelled'
+    ]);
+
+    $order->update([
+        'status' => $request->status
+    ]);
+
+    return response()->json([
+        "message" => "Order status updated"
+    ]);
+}
+
+public function allOrders(Request $request)
+{
+    if ($request->user()->role !== 'admin') {
         return response()->json([
-            "status"=> "success",
-            "message"=> "Order Updated"
-        ]);
+            "message" => "Unauthorized"
+        ], 403);
     }
 
-    public function destroy(Order $order){
-        $this->orderService->deleteOrder($order);
-        return response()->json([
-            "status"=> "success",
-            "message"=> "Order Deleted"
-        ]);
-    }
+    $orders = Order::with('items.product', 'address', 'user')
+        ->latest()
+        ->get();
 
-
+    return response()->json($orders);
+}
 }

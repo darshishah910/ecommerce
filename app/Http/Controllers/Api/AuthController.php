@@ -24,6 +24,7 @@ class AuthController extends Controller
          $data = $this->authService->login($request->validated());
         // dd($data);
 
+        app(\App\Services\CartService::class)->merge($user);
         if(!$data){
             return response()->json([
                 "success" => false,

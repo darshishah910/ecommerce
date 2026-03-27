@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "../lib/axios";
+import "../styles/style.css"
 
 interface Address {
     id: number;
@@ -118,7 +119,7 @@ export default function Address() {
                 <input name="name" placeholder="Name" value={form.name} onChange={handleChange} />
                 <p className="error">{errors.name?.[0]}</p>
 
-                <input name="phone" placeholder="Phone" value={form.phone} onChange={handleChange} />
+                <input type="number" name="phone" placeholder="Phone" value={form.phone} onChange={handleChange} />
                 <p className="error">{errors.phone?.[0]}</p>
 
                 <input name="address" placeholder="Address" value={form.address} onChange={handleChange} />
@@ -130,7 +131,7 @@ export default function Address() {
                 <input name="state" placeholder="State" value={form.state} onChange={handleChange} />
                 <p className="error">{errors.state?.[0]}</p>
 
-                <input name="pincode" placeholder="Pincode" value={form.pincode} onChange={handleChange} />
+                <input type="number" name="pincode" placeholder="Pincode" value={form.pincode} onChange={handleChange} />
                 <p className="error">{errors.pincode?.[0]}</p>
 
                 <button onClick={handleSubmit}>

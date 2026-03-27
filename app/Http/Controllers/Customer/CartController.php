@@ -26,8 +26,14 @@ class CartController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $this->cartService->storeCart($request->all());
-        return redirect()->route("cart");
-    }
+{
+    $this->cartService->add(
+        $request->user(),
+        $request->guest_id,
+        $request->product_id,
+        $request->quantity ?? 1
+    );
+
+    return redirect()->route("cart");
+}
 }

@@ -41,13 +41,18 @@ export default function Navbar({ cartCount }: any) {
                                 <a href="/orders">Orders</a>
                             </div>
                         )}
+                        {!isAdmin && (
+                            <div>
+                                <a href="/orders">My order</a>
+                            </div>
+                        )}
                         <button onClick={handleLogout}>Logout</button>
                     </>
                 )}
 
                 {!isAdmin && (
                     <div className="cart-icon" onClick={handleCartClick}>
-                        <a href="/cart">🛒 <span>{cartCount}</span></a>
+                        <a href="/checkout">🛒 <span>{cartCount}</span></a>
                     </div>
                 )}
 

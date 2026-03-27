@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Address;
 
+
 class AddressService
 {
     public function create($user, $data)
@@ -21,6 +22,12 @@ class AddressService
 
     public function get($user)
     {
+      
+         if (is_null($user)) {
+               // dd(collect());
+            return collect(); 
+         }
+
         return Address::where('user_id', $user->id)->latest()->get();
     }
 

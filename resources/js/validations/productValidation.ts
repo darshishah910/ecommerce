@@ -19,8 +19,12 @@ export const validateProduct = (form: any, isEdit: boolean = false) => {
         errors.image = "Product image is required";
     }
 
-    if (![0, 1].includes(Number(form.stock))) {
-        errors.stock = "Invalid stock value";
+    if (form.stock === "" || form.stock === null) {
+        errors.stock = "Stock is required";
+    } else if (isNaN(form.stock)) {
+        errors.stock = "Stock must be a number";
+    } else if (Number(form.stock) < 0) {
+        errors.stock = "Stock cannot be negative";
     }
 
     return errors;

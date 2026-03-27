@@ -16,10 +16,8 @@ Route::get('/', function () {
 
 // Auth routes
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-// Route::post('/register', [AuthController::class, 'register']);
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-// Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('/products',[ProductController::class,'index'])->name('products');
 
@@ -27,17 +25,8 @@ Route::get('/cart',[CartController::class,'index']);
 
 Route::get('/orders',[OrderController::class,'index']);
 
-// Route::get('/address',[AddressController::class,'index']);
+Route::get('/checkout',[CheckOutController::class,'index'])->name("checkout");
 
-Route::get('/checkout',[CheckOutController::class,'index']);
+Route::get('/addresses', [AddressController::class, 'index'])->name('address');
 
-
-
-Route::middleware('auth')->group(function () {
-    Route::get('/addresses', [AddressController::class, 'index'])->name('address');
-
-    Route::post('/addresses', [AddressController::class, 'store']);
-    Route::post('/addresses/update/{id}', [AddressController::class, 'update']);
-    Route::post('/addresses/delete/{id}', [AddressController::class, 'destroy']);
-});
 

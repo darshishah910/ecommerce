@@ -11,6 +11,11 @@ Route::post('/register',[AuthController::class,'register']);
 
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/cart', [CartController::class, 'index']);
+  Route::post('/cart/add', [CartController::class, 'add']);
+    Route::put('/cart/{id}', [CartController::class, 'update']);
+    Route::delete('/cart/{id}', [CartController::class, 'remove']);
+    Route::post('/cart/delete', [CartController::class, 'removeAll']);
+    Route::post('/cart/merge', [CartController::class, 'merge']);
 
 
 Route::middleware('auth:api')->group(function () {
@@ -19,19 +24,16 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
 
-    Route::get('/cart', [CartController::class, 'index']);
-    Route::post('/cart/add', [CartController::class, 'add']);
-    Route::put('/cart/{id}', [CartController::class, 'update']);
-    Route::delete('/cart/{id}', [CartController::class, 'remove']);
-    Route::delete('/cart/delete',[CartController::class,'removeAll']);
-    Route::post('/cart/merge', [CartController::class, 'merge']);
+    // Route::get('/cart', [CartController::class, 'index']);
+  
 
     Route::get('/orders',[OrderController::class,'index']);
     Route::post('/orders', [OrderController::class, 'store']);
-    Route::put('/orders/{id}', [OrderController::class, 'update']);
-    Route::delete('/orders/{id}', [OrderController::class, 'destroy']);
 
-     Route::get('/addresses', [AddressController::class, 'index']);
+    Route::get('/admin/orders', [OrderController::class, 'allOrders']);
+    Route::put('/orders/{order}/status', [OrderController::class, 'updateStatus']);
+
+    Route::get('/addresses', [AddressController::class, 'index']);
     Route::post('/addresses', [AddressController::class, 'store']);
     Route::put('/addresses/{id}', [AddressController::class, 'update']);
     Route::delete('/addresses/{id}', [AddressController::class, 'destroy']);

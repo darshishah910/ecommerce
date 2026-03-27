@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "../lib/axios";
-import Navbar from "../components/ecommerce/Navbar";
-import Footer from "../components/ecommerce/Footer";
-import "../styles/style.css";
+// import Navbar from "../components/ecommerce/Navbar";
+// import Footer from "../components/ecommerce/Footer";
+// import "../styles/style.css";
 
 interface Product {
     id: number;
@@ -33,10 +33,10 @@ export default function Cart() {
             setLoading(true);
 
             const res = await axios.get("/cart", {
-                params: { guest_id: guestId },
-                headers: token
-                    ? { Authorization: `Bearer ${token}` }
-                    : {}
+                // params: { guest_id: guestId },
+                // headers: token
+                //     ? { Authorization: `Bearer ${token}` }
+                //     : {}
             });
 
             setCart(res.data);
@@ -72,10 +72,10 @@ export default function Cart() {
     };
 
     const removeAll = async () => {
-        await axios.delete(`/cart/delete`, {
-            data: { guest_id: guestId }
+        await axios.post(`/cart/delete`, {
+            data: { guest_id: guestId },
+            'Content-Type': 'application/json',
         });
-
         fetchCart();
     };
 
@@ -86,14 +86,16 @@ export default function Cart() {
         ) || 0;
 
     const handleOrder = () => {
-        if (!token || token === "null" || token === "undefined") {
-            alert("Please login first");
-            console.log("token")
-            window.location.href = "/login";
-            return;
+        if(token){
+            window.location.href = "/checkout";
+        }else{
+            if (!token || token === "null" || token === "undefined") {
+                alert("Please login first");
+                console.log("token")
+                window.location.href = "/login";
+                return;
+            }
         }
-
-        window.location.href = "/checkout";
     };
 
   
@@ -107,7 +109,7 @@ export default function Cart() {
 
     return (
         <div className="cart-container">
-            <Navbar />
+            {/* <Navbar /> */}
 
             <h2>Your Cart</h2>
 
@@ -136,13 +138,13 @@ export default function Cart() {
 
             <button onClick={removeAll}>
                 Clear Cart
-            </button>
+            </button> <br /><br />
 
-            <button onClick={handleOrder}>
+            {/* <button onClick={handleOrder}>
                 Place Order
-            </button>
+            </button> */}
 
-            <Footer />
+            {/* <Footer /> */}
         </div>
     );
 }

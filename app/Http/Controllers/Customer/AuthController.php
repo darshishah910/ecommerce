@@ -24,18 +24,18 @@ class AuthController extends Controller
     }
 
     
-    public function register(RegisterRequest $request)
-    {
-        try {
-            $this->authService->register($request->validated());
+    // public function register(RegisterRequest $request)
+    // {
+    //     try {
+    //         $this->authService->register($request->validated());
 
-        return redirect()
-            ->route('login')
-            ->with('success', 'Register Successfully');
-        } catch (error) {
-            return redirect('register');
-        }
-    }
+    //     return redirect()
+    //         ->route('login')
+    //         ->with('success', 'Register Successfully');
+    //     } catch (error) {
+    //         return redirect('register');
+    //     }
+    // }
 
     
     public function showLogin()
@@ -43,24 +43,24 @@ class AuthController extends Controller
         return Inertia::render('login');
     }
 
-   public function login(LoginRequest $request)
-    {
-        try {
-            $success = $this->authService->loginWeb($request->validated());
+//    public function login(LoginRequest $request)
+//     {
+//         try {
+//             $success = $this->authService->loginWeb($request->validated());
 
-        if (!$success) {
-            return back()->withErrors([
-                'email' => 'Invalid credentials'
-            ]);
-        }
+//         if (!$success) {
+//             return back()->withErrors([
+//                 'email' => 'Invalid credentials'
+//             ]);
+//         }
 
-        return redirect()->route('product');
-        } catch ( error) {
-            return back()->withErrors([
-                'email'=> 'try again'
-            ]);
-        }
-    }
+//         return redirect()->route('product');
+//         } catch ( error) {
+//             return back()->withErrors([
+//                 'email'=> 'try again'
+//             ]);
+//         }
+//     }
 
     public function logout()
     {

@@ -53,7 +53,7 @@ export default function Products() {
     };
 
     useEffect(() => {
-        
+
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
             setUser(JSON.parse(storedUser));
@@ -65,11 +65,23 @@ export default function Products() {
             localStorage.setItem("guest_id", guestId);
         }
 
-        const storedCart = JSON.parse(localStorage.getItem("cart") || "[]");
-        setCartCount(storedCart.length);
+
+        fetchCartCount();
 
         fetchProducts();
     }, [search, page]);
+
+    const fetchCartCount = async () => {
+        const guestId = localStorage.getItem("guest_id");
+        const token = localStorage.getItem("token");
+
+        const res = await axios.get("/cart", {
+            // params: { guest_id: guestId },
+            // headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+
+        setCartCount(res.data.items?.length || 0);
+    };
 
     const handleChange = (e: any) => {
         const { name, value, files } = e.target;
@@ -77,7 +89,7 @@ export default function Products() {
         if (name === "image") {
             setForm({ ...form, image: files[0] });
         } else if (name === "stock") {
-            setForm({ ...form, stock: parseInt(value) });
+            setForm({ ...form, stock: parseInt(value) || 0 });
         } else {
             setForm({ ...form, [name]: value });
         }
@@ -85,7 +97,6 @@ export default function Products() {
 
     const handleSubmit = async () => {
         if (loading) return;
-
         const validationErrors = validateProduct(form, !!editId);
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
@@ -149,37 +160,29 @@ export default function Products() {
     };
 
     const handleAddToCart = async (product: any) => {
-    try {
-        let guestId = localStorage.getItem("guest_id");
+        try {
+            let guestId = localStorage.getItem("guest_id");
 
-        if (!guestId) {
-            guestId = "guest_" + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem("guest_id", guestId);
-        }
+            if (!guestId) {
+                guestId = "guest_" + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem("guest_id", guestId);
+            }
 
-        const token = localStorage.getItem("token");
+            const token = localStorage.getItem("token");
 
-        await axios.post(
-            "/cart/add",
-            {
+            await axios.post("/cart/add", {
                 product_id: product.id,
                 quantity: 1,
                 guest_id: guestId
-            },
-            {
-                headers: token
-                    ? { Authorization: `Bearer ${token}` }
-                    : {}
-            }
-        );
+            });
 
-        
-        window.dispatchEvent(new Event("cartUpdated"));
 
-    } catch (err) {
-        console.error(err);
-    }
-};
+            window.dispatchEvent(new Event("cartUpdated"));
+
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     return (
         <>
@@ -206,12 +209,16 @@ export default function Products() {
                             <input name="name" value={form.name} onChange={handleChange} placeholder="Name" />
                             <input type="number" name="price" value={form.price} onChange={handleChange} placeholder="Price" />
                             <input type="file" name="image" onChange={handleChange} />
-                             <input name="description" value={form.description} onChange={handleChange} placeholder="Description" />
+                            <input name="description" value={form.description} onChange={handleChange} placeholder="Description" />
 
-                            <select name="stock" value={form.stock} onChange={handleChange}>
-                                <option value={1}>In Stock</option>
-                                <option value={0}>Out of Stock</option>
-                            </select>
+                            <input
+                                type="number"
+                                name="stock"
+                                value={form.stock}
+                                onChange={handleChange}
+                                placeholder="Quantity"
+                                min={0}
+                            />
 
                             <button onClick={handleSubmit}>
                                 {editId ? "Update" : "Create"}
@@ -234,16 +241,19 @@ export default function Products() {
                                 <h3>{p.name}</h3>
                                 <p className="">{p.description}</p>
                                 <p className="price">₹{p.price}</p>
-                                <p className="stock">{p.stock}</p>
+                                <p className="stock">
+                                    {p.stock > 0 ? `In Stock` : "Out of Stock"}
+                                </p>
 
                                 <div className="card-actions">
-                                    {!isAdmin &&  (
-                                    <button
-                                        className="btn-cart"
-                                        onClick={() => handleAddToCart(p)}
-                                    >
-                                        Add to Cart
-                                    </button>
+                                    {!isAdmin && (
+                                        <button
+                                            className="btn-cart"
+                                            disabled={p.stock <= 0}
+                                            onClick={() => handleAddToCart(p)}
+                                        >
+                                            {p.stock > 0 ? "Add to Cart" : "Out of Stock"}
+                                        </button>
                                     )}
 
                                     {isAdmin && (

@@ -1,50 +1,68 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\Order;
-use App\Models\User;
 use App\Models\OrderItem;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Cart;
+use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 
-class OrderService{
+class OrderService
+{
+    public function create($user, $address)
+    {
+        return DB::transaction(function () use ($user, $address) {
 
-    public function createOrder(User $user, array $order){
-        $user->orders()->create([
-            "user_id"=> $user->id,
-            "order_id"=> $order,        
-        ]);
+            $cart = Cart::with('items.product')
+                ->where('user_id', $user->id)
+                ->first();
 
-        return $user;
+            if (!$cart || $cart->items->isEmpty()) {
+                throw new \Exception("Cart is empty");
+            }
 
+            $totalAmount = 0;
+
+            foreach ($cart->items as $item) {
+                if ($item->product->stock < $item->quantity) {
+                    throw new \Exception("Stock not available for {$item->product->name}");
+                }
+
+                $totalAmount += $item->quantity * $item->product->price;
+            }
+
+            $order = Order::create([
+                "user_id" => $user->id,
+                "address_id" => $address->id,
+                "total_amount" => $totalAmount,
+                "status" => "pending",
+            ]);
+
+            foreach ($cart->items as $item) {
+
+                OrderItem::create([
+                    "order_id" => $order->id,
+                    "product_id" => $item->product_id,
+                    "quantity" => $item->quantity,
+                    "price" => $item->product->price,
+                ]);
+
+                $item->product->decrement('stock', $item->quantity);
+            }
+
+            
+            $cart->items()->delete();
+
+            return $order;
+        });
     }
 
-    public function updateOrder(User $user, Order $order){
-        $user->orders()->update([
-            "user_id"=> $user->id,
-            "order_id"=> $order->id,
-        ]);
-
-        return $user;
+    public function get($user)
+    {
+        return Order::with('items.product', 'address')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->get();
+            
     }
-
-    public function deleteOrder(User $user, Order $order){
-        $user->orders()->delete();
-        return $user;
-    }
-
-    public function getOrders(User $user){
-        $orders = Order::where("user_id", $user->id)->get();
-        return $orders;
-    }
-
-    public function getOrdersCount(User $user){
-        $orders = Order::where("user_id", $user->id)->count();
-        return $orders;
-    }
-
-    
-
-
-  
 }

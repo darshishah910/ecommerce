@@ -13,7 +13,7 @@ class AddressController extends Controller
 
     public function __construct(AddressService $addressService)
     {
-        $this->middleware('auth:api'); 
+        // $this->middleware('auth:api'); 
         $this->addressService = $addressService;
     }
 
